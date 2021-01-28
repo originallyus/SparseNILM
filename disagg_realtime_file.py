@@ -77,7 +77,7 @@ acc = Accuracy(len(labels), folds)
 
 print()
 print('Opening file %s...' % (filename))
-file = open('realtime_power.txt', 'r') 
+file = open(filename, 'r') 
 line_count = 0
 
 y0 = -1
