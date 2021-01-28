@@ -37,7 +37,7 @@ def AMPds_r2013(filename, ids, precision, denoised=False, verbose=True):
 
     if verbose: print('\tCalculating unmetered column %s.' % unmetered_col)
     df[unmetered_col] = df[agg_meter_col] - df[cols].sum(axis=1)
-    df.loc[df[unmetered_col] < 0] = 0
+    #df.loc[df[unmetered_col] < 0] = 0
 
     return df
 
@@ -130,7 +130,7 @@ def RAE_power(filename, ids, precision, denoised=False, verbose=True):
     if verbose: print('\tModfity data with precision %f then convert to int...' % precision)
     for col in list(df):
         df[col] = df[col] * precision
-        df[col] = df[col].astype(int)
+        df[col] = df[col].fillna(0).astype(int)
 
     if verbose: print('\tCalculating unmetered column %s.' % unmetered_col)
     df[unmetered_col] = df[agg_meter_col] - df[cols].sum(axis=1)
