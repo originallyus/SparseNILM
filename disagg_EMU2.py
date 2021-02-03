@@ -103,8 +103,9 @@ while True:
         s_est = sshmm.detangle_k(k)
         y_est = sshmm.y_estimate(s_est, breakdown=True)
         
-        y_true = hidden[i]
-        s_true = sshmm.obs_to_bins(y_true)
+        #where does this come from?
+        y_true = hidden[i]                      #eg. (0, 0, 192, 136, 1, 122, 0, 0, 160)
+        s_true = sshmm.obs_to_bins(y_true)      #eg. [0, 0, 6, 6, 1, 0, 0, 0, 1]
 
         acc.classification_result(fold, s_est, s_true, sshmm.Km)
         acc.measurement_result(fold, y_est, y_true)

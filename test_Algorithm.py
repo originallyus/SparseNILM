@@ -26,13 +26,13 @@ if len(sys.argv) != 9:
     print()
     print('USAGE: %s [test id] [modeldb] [dataset] [precision] [measure] [denoised] [limit] [algo name]' % (sys.argv[0]))
     print()
-    print('       [test id]       - the test ID.')
+    print('       [test id]       - the test ID/name.')
     print('       [modeldb]       - file name of model (omit file ext).')
     print('       [dataset]       - file name of dataset to use (omit file ext).')
     print('       [precision]     - number; e.g. 10 would convert A to dA.')
     print('       [measure]       - the measurement, e.g. A for current')    
     print('       [denoised]      - denoised aggregate reads, else noisy.')
-    print('       [limit]         - a number to limit the amout of test, else use all.')
+    print('       [limit]         - a number to limit the amount of test, else use all.')
     print('       [algo name]     - specifiy the disaggregation algorithm to use.')
     print()
     exit(1)
@@ -42,11 +42,12 @@ print('Parameters:', sys.argv[1:])
 (test_id, modeldb, dataset, precision, measure, denoised, limit, algo_name) = sys.argv[1:]
 precision = float(precision)
 denoised = denoised == 'denoised'
+disagg_algo = getattr(__import__('algo_' + algo_name, fromlist=['disagg_algo']), 'disagg_algo')
+print('Using disaggregation algorithm disagg_algo() from %s.' % ('algo_' + algo_name + '.py'))
+
 limit = limit.lower()
 if limit.isdigit():
     limit = int(limit)
-disagg_algo = getattr(__import__('algo_' + algo_name, fromlist=['disagg_algo']), 'disagg_algo')
-print('Using disaggregation algorithm disagg_algo() from %s.' % ('algo_' + algo_name + '.py'))
 
 datasets_dir = './datasets/%s.csv'
 logs_dir = './logs/%s.log'
@@ -73,6 +74,7 @@ print()
 print('Testing %s algorithm load disagg...' % algo_name)
 acc = Accuracy(len(labels), folds)
 test_times = []
+
 indv_tm_sum = 0.0
 indv_count = 0
 y_noise = 0.0
@@ -107,8 +109,10 @@ for (fold, priors, testing) in folds:
     print()
     print('Begin evaluation testing on observations, compare against ground truth...')
     print()
+
     pbar = ''
     pbar_incro = len(testing) // 20
+    
     for i in range(1, len(obs)):
         multi_switches_count += (sum([i != j for (i, j) in list(zip(hidden[i - 1], hidden[i]))]) > 1)
         
@@ -122,8 +126,8 @@ for (fold, priors, testing) in folds:
         s_est = sshmm.detangle_k(k)
         y_est = sshmm.y_estimate(s_est, breakdown=True)
         
-        y_true = hidden[i]
-        s_true = sshmm.obs_to_bins(y_true)
+        y_true = hidden[i]                      #eg. (0, 0, 192, 136, 1, 122, 0, 0, 160)
+        s_true = sshmm.obs_to_bins(y_true)      #eg [0, 0, 6, 6, 1, 0, 0, 0, 1]
 
         acc.classification_result(fold, s_est, s_true, sshmm.Km)
         acc.measurement_result(fold, y_est, y_true)
