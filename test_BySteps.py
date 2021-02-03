@@ -77,8 +77,8 @@ for (fold, priors, testing) in folds:
     tm_start = time()
     
     sshmm = sshmms[fold]
-    obs_id = list(testing)[0]
-    obs = list(testing[obs_id])
+    observation_id = list(testing)[0]
+    observation = list(testing[observation_id])
     hidden = [i for i in testing[labels].to_records(index=False)]
 
     #too much to print
@@ -87,24 +87,26 @@ for (fold, priors, testing) in folds:
     #print(hidden)
     
     print()
-    print('Begin evaluation testing on observations, compare against ground truth...')
+    print('Begin evaluation testing on observationervations, compare against ground truth...')
     print()
 
-    for i in range(1, len(obs)):
+    for i in range(1, len(observation)):
         acc.reset()
                 
-        y0 = obs[i - 1]
-        y1 = obs[i]
+        previous_reading = observation[i - 1]
+        current_reading = observation[i]
+        delta = current_reading - previous_reading
         
         start = time() 
-        (p, k, Pt, cdone, ctotal) = disagg_algo(sshmm, [y0, y1])
+        (p, k, Pt, cdone, ctotal) = disagg_algo(sshmm, [previous_reading, current_reading])
         elapsed = (time() - start)
 
         s_est = sshmm.detangle_k(k)
         y_est = sshmm.y_estimate(s_est, breakdown=True)
         
-        y_true = hidden[i]
-        s_true = sshmm.obs_to_bins(y_true)
+        y_true = hidden[i]                      #eg. (0, 0, 192, 136, 1, 122, 0, 0, 160)
+
+        s_true = sshmm.obs_to_bins(y_true)      #eg. [0, 0, 6, 6, 1, 0, 0, 0, 1]
 
         acc.classification_result(fold, s_est, s_true, sshmm.Km)
         acc.measurement_result(fold, y_est, y_true)
@@ -113,14 +115,16 @@ for (fold, priors, testing) in folds:
         if p == 0.0:
             unseen = 'yes'
                     
-        y_noise = round(y1 - sum(y_true), 1)
+        y_noise = round(current_reading - sum(y_true), 1)
                 
         fscore = acc.fs_fscore()
         estacc = acc.estacc()
         scp = sum([i != j for (i, j) in list(zip(hidden[i - 1], hidden[i]))])
-        #print('Obs %5d%s | Δ %4d%s | Noise %3d%s | SCP %2d | Unseen? %-3s | FS-fscore %.4f | Est.Acc. %.4f | Time %7.3fms' % (y1, measure, y1 - y0, measure, y_noise, measure, scp, unseen, fscore, estacc, elapsed * 1000))
-        print('Obs %5d%s Δ %4d%s | SCP %2d | FS-fscore %.4f | Est.Acc. %.4f | Time %7.3fms' % (y1, measure, y1 - y0, measure, scp, fscore, estacc, elapsed * 1000))
-        sleep(1)
+
+        #print('Input Power %5d%s | Δ %4d%s | Noise %3d%s | SCP %2d | Unseen? %-3s | FS-fscore %.4f | Est.Acc. %.4f | Processing Time %7.3fms' % (current_reading, measure, current_reading - previous_reading, measure, y_noise, measure, scp, unseen, fscore, estacc, elapsed * 1000))
+        print('Input Power %5d%s Δ %4d%s | SCP %2d | FS-fscore %.4f | Est.Accuracy %.4f | Processing Time %7.3fms' % (current_reading, measure, delta, measure, scp, fscore, estacc, elapsed * 1000))
+        
+        #sleep(1)
         
     test_times.append((time() - tm_start) / 60)
 

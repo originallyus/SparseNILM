@@ -80,8 +80,8 @@ print('Opening file %s...' % (filename))
 file = open(filename, 'r') 
 line_count = 0
 
-y0 = -1
-y1 = -1
+previous_reading = -1
+current_reading = -1
 
 while True:
     line_count += 1
@@ -99,14 +99,16 @@ while True:
     power = int(int(power) * precision)
         
     # some kind of indexing on the data
-    y0 = y1
-    y1 = power
-    if y0 == -1:
-        y0 = y1
+    previous_reading = current_reading
+    current_reading = power
+    if previous_reading == -1:
+        previous_reading = current_reading
+
+    delta = current_reading - previous_reading
     
     # disaggregation algo, measure time in seconds
     start = time() 
-    (p, k, Pt, cdone, ctotal) = disagg_algo(sshmm, [y0, y1])
+    (p, k, Pt, cdone, ctotal) = disagg_algo(sshmm, [previous_reading, current_reading])
     elapsed = (time() - start)
 
     s_est = sshmm.detangle_k(k)
@@ -125,12 +127,13 @@ while True:
     if p == 0.0:
         unseen = 'yes'
             
-    y_noise = round(y1 - sum(y_true), 1)
+    y_noise = round(current_reading - sum(y_true), 1)
         
     fscore = acc.fs_fscore()
     estacc = acc.estacc()
     scp = sum([i != j for (i, j) in list(zip(hidden[i - 1], hidden[i]))])
-    print('Obs %5d%s Δ %4d%s | SCP %2d | FS-fscore %.4f | Est.Acc. %.4f | Time %7.3fms' % (y1, measure, y1 - y0, measure, scp, fscore, estacc, elapsed * 1000))
+
+    print('Input Power %5d%s Δ %4d%s | SCP %2d | FS-fscore %.4f | Est.Accuracy %.4f | Processing Time %7.3fms' % (current_reading, measure, delta, measure, scp, fscore, estacc, elapsed * 1000))
 
     sleep(1)
 
