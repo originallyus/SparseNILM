@@ -26,7 +26,7 @@ if len(sys.argv) != 8:
     print()
     print('USAGE: %s [test id] [modeldb] [dataset] [precision] [measure] [denoised] [algo name]' % (sys.argv[0]))
     print()
-    print('       [test id]       - the seting ID.')
+    print('       [test id]       - the test ID/name.')
     print('       [modeldb]       - file name of model (omit file ext).')
     print('       [dataset]       - file name of dataset to use (omit file ext).')
     print('       [precision]     - number; e.g. 10 would convert A to dA.')
@@ -80,6 +80,11 @@ for (fold, priors, testing) in folds:
     obs_id = list(testing)[0]
     obs = list(testing[obs_id])
     hidden = [i for i in testing[labels].to_records(index=False)]
+
+    #too much to print
+    #print()
+    #print('hidden:')
+    #print(hidden)
     
     print()
     print('Begin evaluation testing on observations, compare against ground truth...')
